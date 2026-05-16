@@ -6,6 +6,7 @@ const STORAGE_KEYS = {
   BUDGETS: 'set_budgets',
   SETTINGS: 'set_settings',
   DARK_MODE: 'set_dark_mode',
+  THEME: 'set_theme',
 };
 
 // Generic storage helpers
@@ -58,6 +59,8 @@ export const saveSettings = (s) => set(STORAGE_KEYS.SETTINGS, s);
 // Dark mode
 export const getDarkMode = () => get(STORAGE_KEYS.DARK_MODE) || false;
 export const setDarkMode = (val) => set(STORAGE_KEYS.DARK_MODE, val);
+export const getTheme = () => get(STORAGE_KEYS.THEME) || 'light';
+export const setTheme = (val) => set(STORAGE_KEYS.THEME, val);
 
 // Clear all app data
 export const clearAllData = () => {

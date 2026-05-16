@@ -2,11 +2,17 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import {
   getCurrentUser, setCurrentUser, getUsers, saveUsers, logoutUser,
   getTransactions, saveTransactions, getCategories, saveCategories,
-  getBudgets, saveBudgets, getSettings, saveSettings, getDarkMode, setDarkMode, clearAllData,
+  getBudgets, saveBudgets, getSettings, saveSettings, getTheme, setTheme, clearAllData,
 } from '../utils/storage.js';
 import { DEFAULT_CATEGORIES } from '../data/mockData.js';
 
 const AppContext = createContext(null);
+
+const applyTheme = (theme) => {
+  const isDark = theme === 'dark';
+  document.documentElement.classList.toggle('dark', isDark);
+  document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
+};
 
 export const AppProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -20,9 +26,10 @@ export const AppProvider = ({ children }) => {
 
   // Initialize data
   useEffect(() => {
-    const dm = getDarkMode();
+    const theme = getTheme();
+    const dm = theme === 'dark';
     setDarkModeState(dm);
-    if (dm) document.documentElement.classList.add('dark');
+    applyTheme(theme);
 
     // Load current user
     const currentUser = getCurrentUser();
@@ -58,8 +65,9 @@ export const AppProvider = ({ children }) => {
 
   // Auth
   const login = useCallback((email, password) => {
+    const normalizedEmail = email.trim().toLowerCase();
     const users = getUsers();
-    const found = users.find(u => u.email === email && u.password === password);
+    const found = users.find(u => u.email.toLowerCase() === normalizedEmail && u.password === password);
     if (!found) return { success: false, message: 'Email hoặc mật khẩu không đúng!' };
     setCurrentUser(found);
     setUser(found);
@@ -68,13 +76,14 @@ export const AppProvider = ({ children }) => {
   }, []);
 
   const register = useCallback((name, email, password) => {
+    const normalizedEmail = email.trim().toLowerCase();
     const users = getUsers();
-    if (users.find(u => u.email === email)) {
+    if (users.find(u => u.email.toLowerCase() === normalizedEmail)) {
       return { success: false, message: 'Email đã được sử dụng!' };
     }
     const newUser = {
       id: `user-${Date.now()}`,
-      name, email, password,
+      name, email: normalizedEmail, password,
       avatar: null,
       createdAt: new Date().toISOString(),
     };
@@ -82,6 +91,26 @@ export const AppProvider = ({ children }) => {
     setCurrentUser(newUser);
     setUser(newUser);
     loadUserData(newUser.id);
+    return { success: true };
+  }, []);
+
+  const resetPassword = useCallback((email, newPassword) => {
+    const normalizedEmail = email.trim().toLowerCase();
+    const users = getUsers();
+    const idx = users.findIndex(u => u.email.toLowerCase() === normalizedEmail);
+    if (idx === -1) {
+      return { success: false, message: 'Không tìm thấy tài khoản với email này.' };
+    }
+
+    users[idx] = { ...users[idx], password: newPassword };
+    saveUsers(users);
+
+    const currentUser = getCurrentUser();
+    if (currentUser?.id === users[idx].id) {
+      setCurrentUser(users[idx]);
+      setUser(users[idx]);
+    }
+
     return { success: true };
   }, []);
 
@@ -172,9 +201,9 @@ export const AppProvider = ({ children }) => {
   const toggleDarkMode = useCallback(() => {
     const newVal = !darkMode;
     setDarkModeState(newVal);
-    setDarkMode(newVal);
-    if (newVal) document.documentElement.classList.add('dark');
-    else document.documentElement.classList.remove('dark');
+    const nextTheme = newVal ? 'dark' : 'light';
+    setTheme(nextTheme);
+    applyTheme(nextTheme);
   }, [darkMode]);
 
   // Clear all data
@@ -192,7 +221,7 @@ export const AppProvider = ({ children }) => {
 
   const value = {
     user, transactions, categories, budgets, settings, darkMode, toast,
-    login, register, logout,
+    login, register, resetPassword, logout,
     addTransaction, updateTransaction, deleteTransaction,
     addCategory, updateCategory, deleteCategory,
     updateBudgets, updateUser,

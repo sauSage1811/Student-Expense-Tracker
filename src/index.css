@@ -10,6 +10,7 @@
 }
 
 :root {
+  color-scheme: light;
   --primary: #6366f1;
   --primary-light: #818cf8;
   --primary-dark: #4f46e5;
@@ -25,6 +26,13 @@ body {
   background-color: #f1f5f9;
   color: #1e293b;
   min-height: 100vh;
+}
+
+html:not(.dark),
+html:not(.dark) body {
+  background-color: #f1f5f9;
+  color: #1e293b;
+  color-scheme: light;
 }
 
 .dark body {

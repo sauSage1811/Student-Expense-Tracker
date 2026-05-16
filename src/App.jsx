@@ -4,6 +4,7 @@ import { AppProvider, useApp } from './context/AppContext.jsx';
 import AppLayout from './layouts/AppLayout.jsx';
 import Login from './pages/Login.jsx';
 import Register from './pages/Register.jsx';
+import ForgotPassword from './pages/ForgotPassword.jsx';
 import Dashboard from './pages/Dashboard.jsx';
 import Transactions from './pages/Transactions.jsx';
 import Categories from './pages/Categories.jsx';
@@ -26,6 +27,7 @@ const AppRoutes = () => (
   <Routes>
     <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
     <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
+    <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
     <Route
       path="/"
       element={<PrivateRoute><AppLayout /></PrivateRoute>}
