@@ -115,7 +115,9 @@ export const AppProvider = ({ children }) => {
       .eq('id', authUser.id)
       .maybeSingle();
 
-    const appUser = toAppUser(authUser, profile);
+    const appUser = toAppUser(authUser, profile || {
+      name: authUser.user_metadata?.name || authUser.email?.split('@')[0] || 'Người dùng',
+    });
     setUser(appUser);
     await loadUserData(authUser.id);
     return appUser;
@@ -179,12 +181,6 @@ export const AppProvider = ({ children }) => {
 
     if (error) return { success: false, message: getErrorMessage(error) };
     if (!data.user) return { success: false, message: 'Không tạo được tài khoản.' };
-
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .upsert({ id: data.user.id, name });
-
-    if (profileError) return { success: false, message: getErrorMessage(profileError, 'Không tạo được hồ sơ tài khoản.') };
 
     if (!data.session) {
       return { success: true, needsEmailConfirmation: true };
@@ -390,13 +386,12 @@ export const AppProvider = ({ children }) => {
     if (!user) return { success: false };
 
     if (updates.name) {
-      const { error } = await supabase.from('profiles').upsert({ id: user.id, name: updates.name });
+      const { error } = await supabase.auth.updateUser({ data: { name: updates.name } });
       if (error) {
         showToast('error', getErrorMessage(error, 'Không cập nhật được hồ sơ.'));
         return { success: false };
       }
 
-      await supabase.auth.updateUser({ data: { name: updates.name } });
       setUser(prev => ({ ...prev, name: updates.name }));
       showToast('success', 'Cập nhật hồ sơ thành công!');
       return { success: true };
