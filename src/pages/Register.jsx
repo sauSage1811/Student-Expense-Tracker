@@ -62,10 +62,12 @@ const Register = () => {
 
     setLoading(true);
     await new Promise(resolve => setTimeout(resolve, 600));
-    const result = register(form.name.trim(), form.email.trim(), form.password);
+    const result = await register(form.name.trim(), form.email.trim(), form.password);
     setLoading(false);
 
-    if (result.success) {
+    if (result.needsEmailConfirmation) {
+      setErrors({ email: 'Tài khoản đã được tạo. Vui lòng kiểm tra email để xác nhận trước khi đăng nhập.' });
+    } else if (result.success) {
       navigate('/dashboard');
     } else {
       setErrors({ email: result.message });

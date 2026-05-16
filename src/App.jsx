@@ -27,7 +27,7 @@ const AppRoutes = () => (
   <Routes>
     <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
     <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
-    <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
+    <Route path="/forgot-password" element={<ForgotPassword />} />
     <Route
       path="/"
       element={<PrivateRoute><AppLayout /></PrivateRoute>}

@@ -1,10 +1,19 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { User, Mail, Lock, Moon, Sun, Trash2, LogOut, Edit2, Save, AlertTriangle, X, Eye, EyeOff } from 'lucide-react';
 import { useApp } from '../context/AppContext.jsx';
-import { useNavigate } from 'react-router-dom';
+
+const Section = ({ title, children }) => (
+  <div className="bg-white rounded-2xl shadow-soft border border-slate-100 overflow-hidden">
+    <div className="px-5 py-4 border-b border-slate-50">
+      <h3 className="font-bold text-slate-800">{title}</h3>
+    </div>
+    <div className="p-5 space-y-4">{children}</div>
+  </div>
+);
 
 const Profile = () => {
-  const { user, updateUser, toggleDarkMode, darkMode, resetData, logout, showToast } = useApp();
+  const { user, updateUser, changePassword, toggleDarkMode, darkMode, resetData, logout } = useApp();
   const navigate = useNavigate();
 
   const [editName, setEditName] = useState(false);
@@ -15,40 +24,34 @@ const Profile = () => {
   const [pwError, setPwError] = useState('');
   const [confirmReset, setConfirmReset] = useState(false);
 
-  const handleSaveName = () => {
+  const handleSaveName = async () => {
     if (!nameVal.trim()) return;
-    updateUser({ name: nameVal.trim() });
+    await updateUser({ name: nameVal.trim() });
     setEditName(false);
   };
 
-  const handleChangePw = () => {
+  const handleChangePw = async () => {
     setPwError('');
-    if (pwForm.current !== user.password) { setPwError('Mật khẩu hiện tại không đúng'); return; }
+    if (!pwForm.current) { setPwError('Vui lòng nhập mật khẩu hiện tại'); return; }
     if (pwForm.newPw.length < 6) { setPwError('Mật khẩu mới tối thiểu 6 ký tự'); return; }
     if (pwForm.newPw !== pwForm.confirm) { setPwError('Mật khẩu xác nhận không khớp'); return; }
-    updateUser({ password: pwForm.newPw });
+
+    const result = await changePassword(pwForm.current, pwForm.newPw);
+    if (!result.success) { setPwError(result.message); return; }
+
     setChangePw(false);
     setPwForm({ current: '', newPw: '', confirm: '' });
   };
 
-  const handleReset = () => {
-    resetData();
-    navigate('/login');
+  const handleReset = async () => {
+    await resetData();
+    setConfirmReset(false);
   };
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     navigate('/login');
   };
-
-  const Section = ({ title, children }) => (
-    <div className="bg-white rounded-2xl shadow-soft border border-slate-100 overflow-hidden">
-      <div className="px-5 py-4 border-b border-slate-50">
-        <h3 className="font-bold text-slate-800">{title}</h3>
-      </div>
-      <div className="p-5 space-y-4">{children}</div>
-    </div>
-  );
 
   return (
     <div className="p-4 md:p-6 space-y-5 animate-fade-in max-w-2xl mx-auto">
@@ -57,7 +60,6 @@ const Profile = () => {
         <p className="text-sm text-slate-500">Quản lý thông tin tài khoản của bạn</p>
       </div>
 
-      {/* Avatar & name */}
       <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl p-6 text-white text-center">
         <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center text-4xl font-bold mx-auto mb-3 border-4 border-white/30">
           {user?.name?.charAt(0)?.toUpperCase() || 'S'}
@@ -70,9 +72,7 @@ const Profile = () => {
         </div>
       </div>
 
-      {/* Profile info */}
       <Section title="Thông tin cá nhân">
-        {/* Name */}
         <div>
           <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Họ và tên</label>
           {editName ? (
@@ -105,7 +105,6 @@ const Profile = () => {
           )}
         </div>
 
-        {/* Email */}
         <div>
           <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Email</label>
           <div className="flex items-center gap-2.5 p-3 bg-slate-50 rounded-xl">
@@ -116,7 +115,6 @@ const Profile = () => {
         </div>
       </Section>
 
-      {/* Password */}
       <Section title="Bảo mật">
         {!changePw ? (
           <button
@@ -165,7 +163,6 @@ const Profile = () => {
         )}
       </Section>
 
-      {/* Appearance */}
       <Section title="Giao diện">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -184,7 +181,6 @@ const Profile = () => {
         </div>
       </Section>
 
-      {/* Danger zone */}
       <Section title="Vùng nguy hiểm">
         <div className="space-y-3">
           <button
@@ -204,13 +200,11 @@ const Profile = () => {
         </div>
       </Section>
 
-      {/* Version info */}
       <div className="text-center text-xs text-slate-400 pb-4">
         <p>Student Expense Tracker v1.0.0</p>
-        <p className="mt-0.5">Dữ liệu lưu trữ tại Local Browser</p>
+        <p className="mt-0.5">Dữ liệu đồng bộ qua Supabase</p>
       </div>
 
-      {/* Reset confirm modal */}
       {confirmReset && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setConfirmReset(false)} />
@@ -219,7 +213,7 @@ const Profile = () => {
               <AlertTriangle size={28} className="text-red-500" />
             </div>
             <h3 className="text-lg font-bold text-slate-800 mb-1">Xóa toàn bộ dữ liệu?</h3>
-            <p className="text-sm text-slate-500 mb-5">Tất cả giao dịch, danh mục và ngân sách sẽ bị xóa vĩnh viễn. Hành động này không thể hoàn tác!</p>
+            <p className="text-sm text-slate-500 mb-5">Tất cả giao dịch, danh mục tùy chỉnh và ngân sách sẽ bị xóa vĩnh viễn.</p>
             <div className="flex gap-3">
               <button onClick={() => setConfirmReset(false)} className="flex-1 py-2.5 border border-slate-200 rounded-xl font-medium text-slate-600 hover:bg-slate-50">Hủy</button>
               <button onClick={handleReset} className="flex-1 py-2.5 bg-red-500 text-white rounded-xl font-medium hover:bg-red-600">Xóa tất cả</button>
